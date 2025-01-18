@@ -1,0 +1,28 @@
+{
+    "name": "cli-helper",
+    "displayName": "CLI Helper",
+    "description": "VSCode extension to optimize CLI commands",
+    "version": "0.1.0",
+    "engines": {
+        "vscode": "^1.78.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:cli-helper.analyzeHistory"
+    ],
+    "main": "./out/extension.js",
+    "scripts": {
+        "vscode:prepublish": "tsc -p ./",
+        "compile": "tsc -p ./",
+        "watch": "tsc -w -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "node-fetch": "^3.0.0"
+    }
+}

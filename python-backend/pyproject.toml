@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cli-helper-backend"
+version = "0.1.0"
+description = "Python backend for CLI Helper VSCode extension"
+authors = ["Sagi Ezri <sagi.ezri@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+flask = "^3.1.0"
+flask-cors = "^5.0.0"
+openai = "^1.59.8"
+diskcache = "^5.6.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

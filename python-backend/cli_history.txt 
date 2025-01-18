@@ -1,0 +1,3 @@
+ls -l
+grep "error" logs.txt
+find . -name "*.py"
