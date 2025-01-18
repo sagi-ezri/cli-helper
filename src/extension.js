@@ -4,13 +4,28 @@ import fetch from 'node-fetch';
 
 let pythonProcess: ChildProcessWithoutNullStreams | undefined;
 
+interface AnalyzeHistoryResponse {
+    results?: { command: string; suggestions: string }[];
+    error?: string;
+}
+
 /**
- * Fetches and analyzes CLI history using the Python backend.
+ * Fetch and analyze CLI history from the Python backend.
  */
 async function analyzeCLIHistory(context: vscode.ExtensionContext): Promise<void> {
     try {
         const response = await fetch('http://127.0.0.1:5000/analyze-history');
-        const data = await response.json();
+        if (!response.ok) {
+            vscode.window.showErrorMessage(`Backend error: ${response.statusText}`);
+            return;
+        }
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            throw new Error(`Invalid JSON response: ${e.message}`);
+        }
 
         if (data.results && data.results.length > 0) {
             for (const result of data.results) {
@@ -24,12 +39,12 @@ async function analyzeCLIHistory(context: vscode.ExtensionContext): Promise<void
             vscode.window.showInformationMessage('No new optimizations available.');
         }
     } catch (error) {
-        vscode.window.showErrorMessage(`Failed to fetch CLI history: ${error}`);
+        vscode.window.showErrorMessage(`Failed to fetch CLI history: ${error.message}`);
     }
 }
 
 /**
- * Starts the Python backend using Poetry.
+ * Start the Python backend using Poetry.
  */
 function startPythonBackend(context: vscode.ExtensionContext): void {
     try {
@@ -38,11 +53,11 @@ function startPythonBackend(context: vscode.ExtensionContext): void {
         });
 
         pythonProcess.stdout.on('data', (data) => {
-            console.log(`Python Backend: ${data}`);
+            console.log(`Python Backend: ${data.toString()}`);
         });
 
         pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python Backend Error: ${data}`);
+            console.error(`Python Backend Error: ${data.toString()}`);
         });
 
         pythonProcess.on('error', (err) => {
@@ -55,34 +70,29 @@ function startPythonBackend(context: vscode.ExtensionContext): void {
             }
         });
     } catch (err) {
-        vscode.window.showErrorMessage(`Error starting Python backend: ${err}`);
+        vscode.window.showErrorMessage(`Error starting Python backend: ${(err as Error).message}`);
     }
 }
 
-/**
- * Activates the extension.
- */
 export function activate(context: vscode.ExtensionContext): void {
+    console.log('CLI Helper extension is now active!');
+
     // Start the Python backend
     startPythonBackend(context);
 
-    // Register the CLI Helper Analyze History command
-    const disposableAnalyze = vscode.commands.registerCommand('cli-helper.analyzeHistory', () => {
-        analyzeCLIHistory(context);
+    // Register CLI Helper Analyze History command
+    const disposableAnalyze = vscode.commands.registerCommand('cli-helper.analyzeHistory', async () => {
+        console.log('CLI Helper command triggered!');
+        await analyzeCLIHistory(context);
     });
 
     context.subscriptions.push(disposableAnalyze);
-
-    // Optional: Automatically analyze CLI history on activation
-    analyzeCLIHistory(context);
 }
 
-/**
- * Deactivates the extension.
- */
 export function deactivate(): void {
     if (pythonProcess) {
         pythonProcess.kill();
         pythonProcess = undefined;
+        console.log('Python backend process terminated.');
     }
 }

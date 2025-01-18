@@ -1,33 +1,64 @@
-from flask import Flask, request, jsonify
-import openai
-from diskcache import Cache
+from flask import Flask, request, jsonify, stream_with_context, Response
+from openai import OpenAI
 import os
+from diskcache import Cache
+from dotenv import load_dotenv
+import logging
 
+# Load environment variables from .env
+load_dotenv()
+
+# Initialize Flask app
 app = Flask(__name__)
 
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
 # Cache setup (7-day expiry)
-cache = Cache('./cache')
-cache.expire = 7 * 24 * 60 * 60
+CACHE_DIR = os.getenv("CACHE_DIR", "./cache")
+CACHE_EXPIRY = int(os.getenv("CACHE_EXPIRY", 7 * 24 * 60 * 60))
+cache = Cache(CACHE_DIR)
+cache.expire = CACHE_EXPIRY
 
 # Environment variables
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your-default-api-key")
-MODEL = os.getenv("MODEL", "gpt-4")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+MODEL = os.getenv("MODEL", "gpt-4o-mini")
 CLI_HISTORY_FILE = os.getenv("CLI_HISTORY_FILE", "./cli_history.txt")
+
+# OpenAI client
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 @app.route('/set-config', methods=['POST'])
 def set_config():
-    """Set API token and model."""
+    """Set or update configuration for OpenAI API key and model."""
     global OPENAI_API_KEY, MODEL
-    data = request.json
-    OPENAI_API_KEY = data.get("api_key", OPENAI_API_KEY)
-    MODEL = data.get("model", MODEL)
-    return jsonify({"message": "Configuration updated successfully!"})
+    try:
+        data = request.json
+        if not data:
+            raise ValueError("No configuration data provided.")
+
+        OPENAI_API_KEY = data.get("api_key", OPENAI_API_KEY)
+        MODEL = data.get("model", MODEL)
+        client.api_key = OPENAI_API_KEY
+
+        logger.info("Configuration updated: API Key and Model")
+        return jsonify({"message": "Configuration updated successfully!"}), 200
+    except Exception as e:
+        logger.error(f"Error updating configuration: {e}")
+        return jsonify({"error": str(e)}), 400
+
 
 @app.route('/analyze-history', methods=['GET'])
 def analyze_history():
     """Analyze CLI history and provide suggestions."""
     try:
-        openai.api_key = OPENAI_API_KEY
+        if not os.path.exists(CLI_HISTORY_FILE) or os.path.getsize(CLI_HISTORY_FILE) == 0:
+            error_message = f"CLI history file is missing or empty: {CLI_HISTORY_FILE}"
+            logger.warning(error_message)
+            return jsonify({"error": error_message}), 400
+
         with open(CLI_HISTORY_FILE, 'r') as f:
             history = f.readlines()
 
@@ -37,25 +68,38 @@ def analyze_history():
             if not command or cache.get(command):
                 continue
 
-            response = openai.ChatCompletion.create(
-                model=MODEL,
-                messages=[
-                    {"role": "system", "content": "You are a CLI assistant providing command optimizations."},
-                    {"role": "user", "content": f"Analyze this command: {command}. Provide suggestions for improvement."}
-                ]
-            )
-            suggestions = response.choices[0].message['content']
-            cache[command] = suggestions
-            results.append({"command": command, "suggestions": suggestions})
+            logger.debug(f"Processing command: {command}")
 
-        return jsonify({"results": results})
+            try:
+                # Simulate OpenAI API response for debugging
+                suggestions = f"Suggestions for: {command}"
+                results.append({"command": command, "suggestions": suggestions})
+                cache[command] = suggestions
+            except Exception as e:
+                logger.error(f"Error processing command '{command}': {e}")
+                results.append({"command": command, "suggestions": "Error processing command."})
+
+        return jsonify({"results": results}), 200
+
     except Exception as e:
+        logger.exception("Error in /analyze-history endpoint.")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/get-cached-results', methods=['GET'])
 def get_cached_results():
     """Retrieve cached results."""
-    return jsonify({"cached_results": [{"command": k, "suggestions": v} for k, v in cache.items()]})
+    try:
+        cached_results = [{"command": key, "suggestions": cache[key]} for key in cache.iterkeys()]
+        return jsonify({"cached_results": cached_results}), 200
+    except Exception as e:
+        logger.exception("Error retrieving cached results.")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    try:
+        logger.info("Starting Flask server...")
+        app.run(port=5000, debug=True)
+    except Exception as e:
+        logger.exception(f"Failed to start Flask server: {e}")

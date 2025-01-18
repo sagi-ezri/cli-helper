@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "lib": [
+            "es6",
+            "dom"
+        ],
+        "outDir": "./out",
+        "rootDir": "./",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true, // Skips type checking for third-party libraries
+        "typeRoots": [
+            "node_modules/@types"
+        ],
+        "types": [
+            "vscode",
+            "node"
+        ]
+    }
+}

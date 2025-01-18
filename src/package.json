@@ -1,13 +1,16 @@
 {
     "name": "cli-helper",
     "displayName": "CLI Helper",
-    "description": "VSCode extension to optimize CLI commands",
+    "description": "A VSCode extension powered by OpenAI to optimize CLI commands.",
     "version": "0.1.0",
+    "publisher": "your-name-or-organization",
     "engines": {
         "vscode": "^1.78.0"
     },
     "categories": [
-        "Other"
+        "Other",
+        "Productivity",
+        "AI"
     ],
     "activationEvents": [
         "onCommand:cli-helper.analyzeHistory"
@@ -20,9 +23,19 @@
     },
     "devDependencies": {
         "@types/node": "^18.0.0",
+        "@types/vscode": "^1.78.0",
         "typescript": "^5.0.0"
     },
     "dependencies": {
         "node-fetch": "^3.0.0"
+    },
+    "contributes": {
+        "commands": [
+            {
+                "command": "cli-helper.analyzeHistory",
+                "title": "Analyze CLI History",
+                "category": "CLI Helper"
+            }
+        ]
     }
 }
