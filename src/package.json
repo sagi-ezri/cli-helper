@@ -23,11 +23,9 @@
     },
     "devDependencies": {
         "@types/node": "^18.0.0",
+        "@types/node-fetch": "^2.6.12",
         "@types/vscode": "^1.78.0",
         "typescript": "^5.0.0"
-    },
-    "dependencies": {
-        "node-fetch": "^3.0.0"
     },
     "contributes": {
         "commands": [
@@ -37,5 +35,8 @@
                 "category": "CLI Helper"
             }
         ]
+    },
+    "dependencies": {
+        "node-fetch": "^2.6.7"
     }
 }

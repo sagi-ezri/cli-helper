@@ -9,3 +9,4 @@ node_modules/
 *.env
 out/
 .vscode/
+pythons-backend/cache/

@@ -40,26 +40,12 @@
    - Open the project in VSCode.
    - Press `F5` to start debugging.
 
----
-
 ## **Usage**
 
 1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) in VSCode.
 2. Select `CLI Helper: Analyze History` to analyze your CLI commands.
 3. View optimization suggestions directly in VSCode.
 
----
-
-## **Project Structure**
-
-```
-cli-helper/
-├── python-backend/  # Python backend (Flask, caching)
-├── src/             # VSCode extension (TypeScript)
-```
-
----
-
 ## **License**
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
